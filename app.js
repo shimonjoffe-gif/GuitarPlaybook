@@ -124,7 +124,7 @@
     controls.innerHTML = `
       <div class="row">
         <button id="tap" title="Тап-темп">Темп</button>
-        <button id="playpause" class="primary">▶</button>
+        <button id="playpause" class="primary wide">Старт</button>
         <button id="top" title="В начало">⤒</button>
       </div>
       <div class="row">
@@ -133,6 +133,7 @@
         <span style="color:var(--text-dim);font-size:0.8rem;">быстро</span>
         <span class="speed-label" id="speedLabel">${speed} px/с</span>
       </div>
+      <div class="hint-swipe">Во время воспроизведения: свайп вверх/вниз по тексту — скорость</div>
     `;
     document.body.appendChild(controls);
 
@@ -140,14 +141,20 @@
     const speedLabel = controls.querySelector("#speedLabel");
     const playBtn = controls.querySelector("#playpause");
 
+    function setSpeed(v) {
+      speed = Math.min(150, Math.max(5, Math.round(v)));
+      speedRange.value = String(speed);
+      speedLabel.textContent = `${speed} px/с`;
+      localStorage.setItem(`speed:${song.id}`, String(speed));
+    }
+
     function step(ts) {
       if (!playing) return;
       if (lastTs != null) {
         const dt = (ts - lastTs) / 1000;
         main.scrollTop += speed * dt;
         if (main.scrollTop + main.clientHeight >= main.scrollHeight - 2) {
-          playing = false;
-          playBtn.textContent = "▶";
+          pause();
           return;
         }
       }
@@ -158,24 +165,21 @@
     function play() {
       playing = true;
       lastTs = null;
-      playBtn.textContent = "⏸";
+      playBtn.textContent = "Пауза";
       rafId = requestAnimationFrame(step);
     }
     function pause() {
       playing = false;
-      playBtn.textContent = "▶";
+      playBtn.textContent = "Старт";
       if (rafId) cancelAnimationFrame(rafId);
+      rafId = null;
     }
 
     playBtn.addEventListener("click", () => (playing ? pause() : play()));
     controls.querySelector("#top").addEventListener("click", () => {
       main.scrollTop = 0;
     });
-    speedRange.addEventListener("input", () => {
-      speed = Number(speedRange.value);
-      speedLabel.textContent = `${speed} px/с`;
-      localStorage.setItem(`speed:${song.id}`, String(speed));
-    });
+    speedRange.addEventListener("input", () => setSpeed(Number(speedRange.value)));
 
     controls.querySelector("#tap").addEventListener("click", () => {
       const now = performance.now();
@@ -186,13 +190,40 @@
         for (let i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i - 1]);
         const avgMs = intervals.reduce((a, b) => a + b, 0) / intervals.length;
         const bpm = Math.round(60000 / avgMs);
-        speed = pxPerSecFromBpm(bpm);
-        speedRange.value = String(Math.min(150, Math.max(5, speed)));
-        speed = Number(speedRange.value);
+        setSpeed(pxPerSecFromBpm(bpm));
         speedLabel.textContent = `${speed} px/с (~${bpm} BPM)`;
-        localStorage.setItem(`speed:${song.id}`, String(speed));
       }
     });
+
+    // Swipe up/down on the lyrics while playing adjusts speed instead of scrolling manually.
+    let dragStartY = null;
+    let dragStartSpeed = speed;
+    main.addEventListener(
+      "touchstart",
+      (e) => {
+        if (!playing) return;
+        dragStartY = e.touches[0].clientY;
+        dragStartSpeed = speed;
+      },
+      { passive: true }
+    );
+    main.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!playing || dragStartY == null) return;
+        e.preventDefault();
+        const dy = dragStartY - e.touches[0].clientY;
+        setSpeed(dragStartSpeed + dy * 0.6);
+      },
+      { passive: false }
+    );
+    main.addEventListener(
+      "touchend",
+      () => {
+        dragStartY = null;
+      },
+      { passive: true }
+    );
   }
 
   function pxPerSecFromBpm(bpm) {

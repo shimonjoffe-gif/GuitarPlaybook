@@ -170,9 +170,21 @@ ul.list a .chevron {
   border-color: var(--accent);
 }
 
+.controls button.wide {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 1.05rem;
+}
+
 .controls .speed-label {
   color: var(--text-dim);
   font-size: 0.8rem;
   min-width: 64px;
   text-align: right;
+}
+
+.controls .hint-swipe {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-align: center;
 }
