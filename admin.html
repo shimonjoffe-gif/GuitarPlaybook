@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guitar Playbook — редактор каталога</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>Редактор каталога (только на компьютере)</h1>
+  <p class="hint">
+    Работает в Chrome / Edge. Сначала откройте файл <code>data/catalog.json</code> проекта,
+    затем вставляйте песни по одной — каждая сразу сохраняется в файл.
+  </p>
+
+  <section class="panel">
+    <button id="openFile">1. Открыть data/catalog.json</button>
+    <span id="fileStatus" class="status">Файл не открыт</span>
+  </section>
+
+  <section class="panel" id="formPanel" hidden>
+    <div class="row">
+      <label>Исполнитель
+        <input id="artist" list="artistList" placeholder="Например: Порнофильмы">
+        <datalist id="artistList"></datalist>
+      </label>
+      <label>Название песни
+        <input id="title" placeholder="Например: Я так соскучился">
+      </label>
+    </div>
+    <div class="row">
+      <label>Тональность (необязательно)
+        <input id="key" placeholder="Am">
+      </label>
+      <label>BPM (необязательно)
+        <input id="bpm" type="number" placeholder="90">
+      </label>
+      <label>Ссылка на источник (необязательно)
+        <input id="sourceUrl" placeholder="https://mytabs.ru/...">
+      </label>
+    </div>
+
+    <label class="block">Вставьте текст с аккордами как есть (скопировано с сайта)
+      <textarea id="raw" rows="14" placeholder="Вставьте сюда текст с mytabs.ru или похожего сайта"></textarea>
+    </label>
+
+    <button id="convert">2. Преобразовать аккорды</button>
+
+    <label class="block">Результат — проверьте и при необходимости поправьте вручную
+      <textarea id="result" rows="14" placeholder="Здесь появится текст с аккордами в формате [Am]слово"></textarea>
+    </label>
+
+    <button id="save" class="primary">3. Добавить песню в каталог</button>
+    <span id="saveStatus" class="status"></span>
+  </section>
+
+  <section class="panel">
+    <h2>Текущий каталог</h2>
+    <ul id="catalogList" class="catalog-list"></ul>
+  </section>
+</div>
+<script src="admin.js"></script>
+</body>
+</html>
