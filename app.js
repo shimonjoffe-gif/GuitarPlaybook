@@ -258,7 +258,16 @@
   }
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js").catch(() => {});
+    let refreshedOnce = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshedOnce) return;
+      refreshedOnce = true;
+      location.reload();
+    });
+    navigator.serviceWorker
+      .register("sw.js")
+      .then((reg) => reg.update())
+      .catch(() => {});
   }
 
   loadCatalog();
