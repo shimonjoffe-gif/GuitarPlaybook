@@ -111,9 +111,13 @@
   }
 
   // --- Auto-scroll engine ---
+  const SPEED_MIN = 30;
+  const SPEED_MAX = 60;
+
   function setupScroller(song) {
     const main = document.querySelector("main");
-    let speed = Number(localStorage.getItem(`speed:${song.id}`)) || pxPerSecFromBpm(song.bpm) || 25;
+    const clamp = (v) => Math.min(SPEED_MAX, Math.max(SPEED_MIN, Math.round(v)));
+    let speed = clamp(Number(localStorage.getItem(`speed:${song.id}`)) || pxPerSecFromBpm(song.bpm) || 40);
     let playing = false;
     let rafId = null;
     let lastTs = null;
@@ -129,7 +133,7 @@
       </div>
       <div class="row">
         <span style="color:var(--text-dim);font-size:0.8rem;">медленно</span>
-        <input id="speedRange" type="range" min="5" max="150" step="1" value="${speed}">
+        <input id="speedRange" type="range" min="${SPEED_MIN}" max="${SPEED_MAX}" step="1" value="${speed}">
         <span style="color:var(--text-dim);font-size:0.8rem;">быстро</span>
         <span class="speed-label" id="speedLabel">${speed} px/с</span>
       </div>
@@ -142,10 +146,18 @@
     const playBtn = controls.querySelector("#playpause");
 
     function setSpeed(v) {
-      speed = Math.min(150, Math.max(5, Math.round(v)));
+      speed = clamp(v);
       speedRange.value = String(speed);
       speedLabel.textContent = `${speed} px/с`;
       localStorage.setItem(`speed:${song.id}`, String(speed));
+    }
+
+    // iOS WebKit can keep momentum-scrolling a finger-scrolled list; that inertia then
+    // fights our programmatic scrollTop updates. Briefly toggling overflow cancels it.
+    function killMomentumScroll() {
+      main.style.overflowY = "hidden";
+      void main.offsetHeight;
+      main.style.overflowY = "auto";
     }
 
     function step(ts) {
@@ -163,6 +175,7 @@
     }
 
     function play() {
+      killMomentumScroll();
       playing = true;
       lastTs = null;
       playBtn.textContent = "Пауза";
@@ -213,7 +226,7 @@
         if (!playing || dragStartY == null) return;
         e.preventDefault();
         const dy = dragStartY - e.touches[0].clientY;
-        setSpeed(dragStartSpeed + dy * 0.6);
+        setSpeed(dragStartSpeed + dy * 0.15);
       },
       { passive: false }
     );
@@ -228,8 +241,8 @@
 
   function pxPerSecFromBpm(bpm) {
     if (!bpm) return null;
-    // ~1 line of lyrics per 2 beats, ~34px per line — tuned empirically, adjustable via slider anyway.
-    return Math.round((bpm / 60) * 17);
+    // Maps a ~60-140 bpm range onto the 30-60 px/s scroll range; fine-tune with the slider/swipe.
+    return Math.round((bpm / 60) * 27);
   }
 
   window.addEventListener("hashchange", route);

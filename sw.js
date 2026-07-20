@@ -1,4 +1,4 @@
-const CACHE = "playbook-v2";
+const CACHE = "playbook-v3";
 const CORE = [
   "./",
   "./index.html",
